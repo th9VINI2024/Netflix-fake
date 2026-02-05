@@ -153,36 +153,60 @@ video, iframe {
 <script>
 let mode = "";
 
-function login() {
-  const pass = password.value;
-  if (pass === "7777") mode = "real";
-  else if (pass === "2503") mode = "fake";
-  else return alert("Senha incorreta");
+const loginDiv = document.getElementById("login");
+const profilesDiv = document.getElementById("profiles");
+const homeDiv = document.getElementById("home");
+const realModeDiv = document.getElementById("realMode");
+const fakeModeDiv = document.getElementById("fakeMode");
+const passwordInput = document.getElementById("password");
+const trailerFrame = document.getElementById("trailer");
+const videoPlayer = document.getElementById("videoPlayer");
 
-  login.style.display = "none";
-  profiles.style.display = "block";
+function login() {
+  const pass = passwordInput.value;
+
+  if (pass === "1234") {
+    mode = "real";
+  } else if (pass === "0000") {
+    mode = "fake";
+  } else {
+    alert("Senha incorreta");
+    return;
+  }
+
+  loginDiv.style.display = "none";
+  profilesDiv.style.display = "block";
 }
 
 function enterHome() {
-  profiles.style.display = "none";
-  home.style.display = "block";
+  profilesDiv.style.display = "none";
+  homeDiv.style.display = "block";
 
-  realMode.style.display = mode === "real" ? "block" : "none";
-  fakeMode.style.display = mode === "fake" ? "block" : "none";
+  if (mode === "real") {
+    realModeDiv.style.display = "block";
+    fakeModeDiv.style.display = "none";
+  } else {
+    realModeDiv.style.display = "none";
+    fakeModeDiv.style.display = "block";
+  }
 }
 
 function loadVideo(e) {
-  videoPlayer.src = URL.createObjectURL(e.target.files[0]);
+  const file = e.target.files[0];
+  if (file) {
+    videoPlayer.src = URL.createObjectURL(file);
+    videoPlayer.play();
+  }
 }
 
 function playTrailer(url) {
-  trailer.src = url;
+  trailerFrame.src = url;
 }
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js');
 }
-</script>
+   </script>
 
 </body>
 </html>
