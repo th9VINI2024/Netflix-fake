@@ -35,6 +35,24 @@
       cursor: pointer;
     }
 
+    h2 {
+      padding: 0 16px;
+      margin-top: 20px;
+    }
+
+    .upload {
+      padding: 0 16px 20px;
+    }
+
+    .upload input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      background: #1b2240;
+      color: #fff;
+      border: none;
+    }
+
     .feed {
       padding: 16px;
       display: grid;
@@ -90,6 +108,13 @@
   <button onclick="logout()">Sair</button>
 </header>
 
+<!-- UPLOAD -->
+<h2>📤 Meus vídeos</h2>
+<div class="upload">
+  <input type="file" accept="video/*" onchange="carregarVideo(event)">
+</div>
+
+<!-- FEED -->
 <div class="feed" id="feed"></div>
 
 <!-- PLAYER -->
@@ -104,17 +129,12 @@
     location.href = "index.html";
   }
 
-  // 🎥 SEUS VÍDEOS MP4
+  // 🎥 vídeos hospedados (opcional)
   const videos = [
     {
       titulo: "Vídeo 1",
       capa: "https://via.placeholder.com/300x420?text=Video+1",
       src: "video1.mp4"
-    },
-    {
-      titulo: "Vídeo 2",
-      capa: "https://via.placeholder.com/300x420?text=Video+2",
-      src: "video2.mp4"
     }
   ];
 
@@ -143,6 +163,14 @@
     video.pause();
     video.src = "";
     player.style.display = "none";
+  }
+
+  function carregarVideo(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      abrir(url);
+    }
   }
 
   function logout() {
