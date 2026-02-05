@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Meu Streaming</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      background: #0b0f1a;
+      font-family: system-ui, sans-serif;
+      color: #fff;
+    }
+
+    header {
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #141a2a;
+    }
+
+    header h1 {
+      font-size: 18px;
+      margin: 0;
+    }
+
+    header button {
+      background: #ff4d4d;
+      border: none;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .feed {
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      background: #1b2240;
+      border-radius: 14px;
+      padding: 10px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .card img {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+
+    .player {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.95);
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    video {
+      width: 100%;
+      max-width: 420px;
+      border-radius: 14px;
+    }
+
+    .player button {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: none;
+      background: #5f7cff;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🎬 Meu Streaming</h1>
+  <button onclick="logout()">Sair</button>
+</header>
+
+<div class="feed" id="feed"></div>
+
+<!-- PLAYER -->
+<div class="player" id="player">
+  <video id="video" controls></video>
+  <button onclick="fechar()">Fechar</button>
+</div>
+
+<script>
+  // 🔒 proteção
+  if (localStorage.getItem("logado") !== "1") {
+    location.href = "index.html";
+  }
+
+  // 🎥 SEUS VÍDEOS MP4
+  const videos = [
+    {
+      titulo: "Vídeo 1",
+      capa: "https://via.placeholder.com/300x420?text=Video+1",
+      src: "video1.mp4"
+    },
+    {
+      titulo: "Vídeo 2",
+      capa: "https://via.placeholder.com/300x420?text=Video+2",
+      src: "video2.mp4"
+    }
+  ];
+
+  const feed = document.getElementById("feed");
+  const player = document.getElementById("player");
+  const video = document.getElementById("video");
+
+  videos.forEach(v => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <img src="${v.capa}">
+      <strong>${v.titulo}</strong>
+    `;
+    card.onclick = () => abrir(v.src);
+    feed.appendChild(card);
+  });
+
+  function abrir(src) {
+    video.src = src;
+    player.style.display = "flex";
+    video.play();
+  }
+
+  function fechar() {
+    video.pause();
+    video.src = "";
+    player.style.display = "none";
+  }
+
+  function logout() {
+    localStorage.removeItem("logado");
+    location.href = "index.html";
+  }
+</script>
+
+</body>
+</html>
