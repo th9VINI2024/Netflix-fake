@@ -108,7 +108,7 @@ video, iframe{
   <h2>Quem está assistindo?</h2>
   <div class="profiles-grid">
     <div class="profile" onclick="selectProfile('real')">
-      <div class="avatar">😊</div>
+      <div class="avatar">🇮🇹</div>
       <p>Você</p>
     </div>
     <div class="profile" onclick="selectProfile('fake')">
@@ -146,49 +146,118 @@ video, iframe{
 </div>
 
 <script>
+/* ====== SENHAS ====== */
 const REAL_PASSWORD = "1234";
 const FAKE_PASSWORD = "0000";
 
-let mode = "";
+let currentMode = "";
 
+/* ====== ELEMENTOS ====== */
+const loginDiv = document.getElementById("login");
+const profilesDiv = document.getElementById("profiles");
+const homeDiv = document.getElementById("home");
+const realModeDiv = document.getElementById("realMode");
+const fakeModeDiv = document.getElementById("fakeMode");
+const videoGrid = document.getElementById("myVideos");
+
+/* ====== LOGIN ====== */
 function login(){
   const pass = document.getElementById("password").value;
+
   if(pass === REAL_PASSWORD){
-    mode = "real";
-  }else if(pass === FAKE_PASSWORD){
-    mode = "fake";
-  }else{
+    currentMode = "real";
+  } else if(pass === FAKE_PASSWORD){
+    currentMode = "fake";
+  } else {
     alert("Senha incorreta");
     return;
   }
-  document.getElementById("login").style.display="none";
-  document.getElementById("profiles").style.display="block";
+
+  loginDiv.style.display = "none";
+  profilesDiv.style.display = "block";
 }
 
+/* ====== PERFIL ====== */
 function selectProfile(type){
-  document.getElementById("profiles").style.display="none";
-  document.getElementById("home").style.display="block";
-  document.getElementById("realMode").style.display = type==="real" ? "block" : "none";
-  document.getElementById("fakeMode").style.display = type==="fake" ? "block" : "none";
+  if(type !== currentMode){
+    alert("Perfil não autorizado");
+    return;
+  }
+
+  profilesDiv.style.display = "none";
+  homeDiv.style.display = "block";
+
+  if(currentMode === "real"){
+    realModeDiv.style.display = "block";
+    fakeModeDiv.style.display = "none";
+    loadSavedVideos();
+  } else {
+    realModeDiv.style.display = "none";
+    fakeModeDiv.style.display = "block";
+  }
 }
 
-/* ---- REAL: vários vídeos ---- */
+/* ====== INDEXED DB ====== */
+let db;
+const request = indexedDB.open("NetflixVideosDB", 1);
+
+request.onupgradeneeded = e => {
+  db = e.target.result;
+  db.createObjectStore("videos", { autoIncrement: true });
+};
+
+request.onsuccess = e => {
+  db = e.target.result;
+};
+
+function saveVideo(blob){
+  const tx = db.transaction("videos", "readwrite");
+  tx.objectStore("videos").add(blob);
+}
+
+function loadSavedVideos(){
+  videoGrid.innerHTML = "";
+  const tx = db.transaction("videos", "readonly");
+  const store = tx.objectStore("videos");
+
+  store.openCursor().onsuccess = e => {
+    const cursor = e.target.result;
+    if(cursor){
+      const url = URL.createObjectURL(cursor.value);
+      createVideo(url);
+      cursor.continue();
+    }
+  };
+}
+
+/* ====== REAL MODE ====== */
 function addVideos(e){
-  const container = document.getElementById("myVideos");
+  if(currentMode !== "real"){
+    alert("Acesso negado");
+    return;
+  }
+
   [...e.target.files].forEach(file=>{
+    saveVideo(file);
     const url = URL.createObjectURL(file);
-    const video = document.createElement("video");
-    video.src = url;
-    video.controls = true;
-    container.appendChild(video);
+    createVideo(url);
   });
 }
 
-/* ---- FAKE ---- */
+function createVideo(url){
+  const video = document.createElement("video");
+  video.src = url;
+  video.controls = true;
+  video.style.width = "100%";
+  videoGrid.appendChild(video);
+}
+
+/* ====== FAKE MODE ====== */
 function playTrailer(url){
+  if(currentMode !== "fake") return;
   document.getElementById("trailer").src = url;
 }
-</script>
+  </script>
 
 </body>
 </html>
