@@ -5,221 +5,184 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Netflix</title>
 
-<link rel="manifest" href="manifest.json">
-
 <style>
+* { box-sizing: border-box; font-family: Arial, sans-serif; }
 body {
   margin: 0;
   background: #000;
   color: #fff;
-  font-family: system-ui, sans-serif;
 }
 
-/* ===== LOGIN ===== */
+/* --------- LOGIN --------- */
 #login {
   height: 100vh;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
+  align-items: center;
 }
-
-.login-box {
-  width: 280px;
-  background: #111;
-  padding: 24px;
-  border-radius: 10px;
-  text-align: center;
-}
-
-.login-box h1 {
-  color: #e50914;
-  margin-bottom: 16px;
-}
-
-input {
-  width: 100%;
-  padding: 10px;
+#login h1 { color: #e50914; margin-bottom: 20px; }
+#login input {
+  padding: 12px;
+  width: 220px;
   border-radius: 4px;
   border: none;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
-
-button {
-  width: 100%;
-  padding: 10px;
+#login button {
+  padding: 12px;
+  width: 220px;
   background: #e50914;
   border: none;
-  color: white;
+  color: #fff;
   font-size: 16px;
   border-radius: 4px;
 }
 
-/* ===== APP ===== */
-#app {
+/* --------- PERFIS --------- */
+#profiles {
   display: none;
+  text-align: center;
+  padding: 30px;
+}
+.profiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 20px;
+  max-width: 600px;
+  margin: auto;
+}
+.profile {
+  cursor: pointer;
+}
+.profile img {
+  width: 100%;
+  border-radius: 6px;
 }
 
-header {
-  padding: 16px;
-  font-size: 22px;
-  font-weight: bold;
-  color: #e50914;
+/* --------- HOME --------- */
+#home {
+  display: none;
+  padding: 20px;
 }
+h2 { margin-bottom: 10px; }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 12px;
-  padding: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
 }
 
 .card {
-  background: #222;
+  background: #111;
   border-radius: 6px;
   overflow: hidden;
   cursor: pointer;
 }
-
 .card img {
   width: 100%;
-  height: 180px;
-  object-fit: cover;
-}
-
-.card span {
   display: block;
-  padding: 6px;
-  font-size: 13px;
 }
 
-/* ===== PLAYER ===== */
+/* --------- PLAYER --------- */
 #player {
   display: none;
-  position: fixed;
-  inset: 0;
-  background: black;
 }
-
-#player video,
-#player iframe {
+video, iframe {
   width: 100%;
-  height: 100%;
-}
-
-.close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: red;
-  border: none;
-  padding: 8px;
+  margin-top: 15px;
+  border-radius: 6px;
 }
 </style>
 </head>
+
 <body>
 
 <!-- LOGIN -->
 <div id="login">
-  <div class="login-box">
-    <h1>Netflix</h1>
-    <input type="password" id="senha" placeholder="Senha">
-    <button onclick="entrar()">Entrar</button>
+  <h1>Netflix</h1>
+  <input type="password" id="password" placeholder="Senha">
+  <button onclick="login()">Entrar</button>
+</div>
+
+<!-- PERFIS -->
+<div id="profiles">
+  <h2>Quem está assistindo?</h2>
+  <div class="profiles-grid">
+    <div class="profile" onclick="enterHome()">
+      <img src="https://i.imgur.com/1X7Z1ZB.png">
+      <p>Você</p>
+    </div>
   </div>
 </div>
 
-<!-- APP -->
-<div id="app">
-  <header>Netflix</header>
+<!-- HOME -->
+<div id="home">
+  <h2 id="modeTitle"></h2>
 
-  <!-- Upload só no modo REAL -->
-  <input type="file" id="upload" accept="video/*" style="display:none">
+  <!-- MODO REAL -->
+  <div id="realMode">
+    <input type="file" accept="video/*" onchange="loadVideo(event)">
+    <div id="player">
+      <video controls id="videoPlayer"></video>
+    </div>
+  </div>
 
-  <div class="grid" id="grid"></div>
-</div>
-
-<!-- PLAYER -->
-<div id="player">
-  <button class="close" onclick="fechar()">X</button>
-  <video id="video" controls></video>
-  <iframe id="iframe" allowfullscreen></iframe>
+  <!-- MODO FAKE -->
+  <div id="fakeMode">
+    <div class="grid">
+      <div class="card" onclick="playTrailer('https://www.youtube.com/embed/oqxAJKy0ii4')">
+        <img src="https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg">
+      </div>
+      <div class="card" onclick="playTrailer('https://www.youtube.com/embed/5hAXVqrljbs')">
+        <img src="https://image.tmdb.org/t/p/w500/9PFonBhy4cQy7Jz20NpMygczOkv.jpg">
+      </div>
+    </div>
+    <iframe id="trailer" height="220" allowfullscreen></iframe>
+  </div>
 </div>
 
 <script>
-const SENHA_REAL = "0000";
-const SENHA_FAKE = "2608";
+let mode = "";
 
-let modo = null;
-let videos = JSON.parse(localStorage.getItem("videos") || "[]");
-
-function entrar() {
-  const s = document.getElementById("senha").value;
-  if (s === SENHA_REAL) modo = "real";
-  else if (s === SENHA_FAKE) modo = "fake";
-  else return alert("Senha incorreta");
-
+function login() {
+  const pass = document.getElementById("password").value;
+  if (pass === "9999") {
+    mode = "real";
+  } else if (pass === "2503") {
+    mode = "fake";
+  } else {
+    alert("Senha incorreta");
+    return;
+  }
   document.getElementById("login").style.display = "none";
-  document.getElementById("app").style.display = "block";
-
-  carregar();
+  document.getElementById("profiles").style.display = "block";
 }
 
-function carregar() {
-  const grid = document.getElementById("grid");
-  grid.innerHTML = "";
+function enterHome() {
+  document.getElementById("profiles").style.display = "none";
+  document.getElementById("home").style.display = "block";
 
-  if (modo === "real") {
-    document.getElementById("upload").style.display = "block";
-    document.getElementById("upload").onchange = e => {
-      const file = e.target.files[0];
-      const url = URL.createObjectURL(file);
-      videos.push({ nome: file.name, url });
-      localStorage.setItem("videos", JSON.stringify(videos));
-      carregar();
-    };
-
-    videos.forEach(v => {
-      grid.innerHTML += `
-        <div class="card" onclick="playVideo('${v.url}')">
-          <img src="https://via.placeholder.com/300x450/111/fff?text=Vídeo">
-          <span>${v.nome}</span>
-        </div>`;
-    });
-
+  if (mode === "real") {
+    document.getElementById("modeTitle").innerText = "Meus vídeos";
+    document.getElementById("realMode").style.display = "block";
+    document.getElementById("fakeMode").style.display = "none";
   } else {
-    const fake = [
-      { nome: "Série Original", trailer: "https://www.youtube.com/embed/5hAXVqrljbs" },
-      { nome: "Suspense", trailer: "https://www.youtube.com/embed/YoHD9XEInc0" },
-      { nome: "Drama Intenso", trailer: "https://www.youtube.com/embed/EXeTwQWrcwY" }
-    ];
-
-    fake.forEach(f => {
-      grid.innerHTML += `
-        <div class="card" onclick="playTrailer('${f.trailer}')">
-          <img src="https://picsum.photos/300/450?random=${Math.random()}">
-          <span>${f.nome}</span>
-        </div>`;
-    });
+    document.getElementById("modeTitle").innerText = "Séries recomendadas";
+    document.getElementById("realMode").style.display = "none";
+    document.getElementById("fakeMode").style.display = "block";
   }
 }
 
-function playVideo(url) {
+function loadVideo(event) {
+  const file = event.target.files[0];
+  const video = document.getElementById("videoPlayer");
+  video.src = URL.createObjectURL(file);
   document.getElementById("player").style.display = "block";
-  document.getElementById("video").src = url;
-  document.getElementById("video").style.display = "block";
-  document.getElementById("iframe").style.display = "none";
 }
 
 function playTrailer(url) {
-  document.getElementById("player").style.display = "block";
-  document.getElementById("iframe").src = url;
-  document.getElementById("iframe").style.display = "block";
-  document.getElementById("video").style.display = "none";
-}
-
-function fechar() {
-  document.getElementById("player").style.display = "none";
-  document.getElementById("video").src = "";
-  document.getElementById("iframe").src = "";
+  document.getElementById("trailer").src = url;
 }
 </script>
 
