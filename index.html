@@ -1,1 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Meu Streaming – Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #0b0f1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: system-ui, sans-serif;
+      color: #fff;
+    }
+
+    .login {
+      width: 100%;
+      max-width: 320px;
+      padding: 24px;
+      background: #141a2a;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.4);
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+      font-size: 22px;
+    }
+
+    p {
+      opacity: .7;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      margin-bottom: 12px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: #5f7cff;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:active {
+      opacity: .8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login">
+    <h1>🎬 Meu Streaming</h1>
+    <p>Login privado</p>
+
+    <input type="password" id="senha" placeholder="Digite sua senha">
+    <button onclick="login()">Entrar</button>
+  </div>
+
+  <script>
+    // 🔐 SUA SENHA
+    const SENHA = "261914"; // pode trocar
+
+    // se já estiver logada, vai direto pro app
+    if (localStorage.getItem("logado") === "1") {
+      location.href = "app.html";
+    }
+
+    function login() {
+      const valor = document.getElementById("senha").value;
+
+      if (valor === SENHA) {
+        localStorage.setItem("logado", "1");
+        location.href = "app.html";
+      } else {
+        alert("Senha incorreta 😢");
+      }
+    }
+  </script>
+
+</body>
+</html>
