@@ -21,7 +21,7 @@ body{margin:0;background:#000;color:#fff}
 #login input,#login button{
   width:240px;padding:14px;border-radius:4px;border:none
 }
-#login button{background:#e50914;color:#fff;font-size:16px}
+#login button{background:#e50914;color:#fff;font-size:16px;margin-top:10px}
 
 /* PERFIS */
 #profiles{display:none;text-align:center;padding-top:60px}
@@ -41,19 +41,15 @@ header{
   padding:14px;font-size:22px;color:#e50914
 }
 
-/* GRID NETFLIX */
+/* GRID */
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:10px;padding:10px
 }
-.card img{
-  width:100%;border-radius:6px;
-  aspect-ratio:2/3;object-fit:cover
+video,iframe{
+  width:100%;border-radius:6px
 }
-
-/* PLAYER */
-video,iframe{width:100%;border-radius:6px;margin-top:10px}
 </style>
 </head>
 
@@ -96,12 +92,10 @@ video,iframe{width:100%;border-radius:6px;margin-top:10px}
 <div id="fakeMode">
   <h3 style="padding-left:10px">Recomendados</h3>
   <div class="grid">
-    <div class="card" onclick="playTrailer('https://www.youtube.com/embed/YoHD9XEInc0')">
-      <img src="https://image.tmdb.org/t/p/w500/9E2y5Q7WlCVNEhP5GiVTjhEhx1o.jpg">
-    </div>
-    <div class="card" onclick="playTrailer('https://www.youtube.com/embed/lJ3_biTbeRM')">
-      <img src="https://image.tmdb.org/t/p/w500/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg">
-    </div>
+    <img src="https://image.tmdb.org/t/p/w500/9E2y5Q7WlCVNEhP5GiVTjhEhx1o.jpg"
+      onclick="playTrailer('https://www.youtube.com/embed/YoHD9XEInc0')">
+    <img src="https://image.tmdb.org/t/p/w500/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg"
+      onclick="playTrailer('https://www.youtube.com/embed/lJ3_biTbeRM')">
   </div>
   <iframe id="trailer" height="220" allowfullscreen></iframe>
 </div>
@@ -114,16 +108,18 @@ const FAKE_PASSWORD="0000";
 let mode="";
 
 /* ELEMENTOS */
-const loginDiv=login;
-const profilesDiv=profiles;
-const homeDiv=home;
-const realDiv=realMode;
-const fakeDiv=fakeMode;
+const loginDiv=document.getElementById("login");
+const profilesDiv=document.getElementById("profiles");
+const homeDiv=document.getElementById("home");
+const realDiv=document.getElementById("realMode");
+const fakeDiv=document.getElementById("fakeMode");
 const grid=document.getElementById("myVideos");
+const passwordInput=document.getElementById("password");
+const trailer=document.getElementById("trailer");
 
 /* LOGIN */
 function login(){
-  const p=password.value;
+  const p=passwordInput.value;
   if(p===REAL_PASSWORD) mode="real";
   else if(p===FAKE_PASSWORD) mode="fake";
   else return alert("Senha incorreta");
@@ -149,17 +145,27 @@ function selectProfile(p){
   }
 }
 
-/* INDEXED DB */
+/* BANCO */
 let db;
-indexedDB.open("NetflixDB",1).onupgradeneeded=e=>{
+const openDB=indexedDB.open("NetflixDB",1);
+
+openDB.onupgradeneeded=e=>{
   db=e.target.result;
   db.createObjectStore("videos",{autoIncrement:true});
 };
-indexedDB.open("NetflixDB",1).onsuccess=e=>db=e.target.result;
 
-function saveVideo(blob){
-  const tx=db.transaction("videos","readwrite");
-  tx.objectStore("videos").add(blob);
+openDB.onsuccess=e=>{
+  db=e.target.result;
+};
+
+/* REAL */
+function addVideos(e){
+  if(mode!=="real") return;
+  [...e.target.files].forEach(file=>{
+    const tx=db.transaction("videos","readwrite");
+    tx.objectStore("videos").add(file);
+    renderVideo(URL.createObjectURL(file));
+  });
 }
 
 function loadVideos(){
@@ -174,18 +180,10 @@ function loadVideos(){
   };
 }
 
-/* REAL */
-function addVideos(e){
-  if(mode!=="real") return;
-  [...e.target.files].forEach(f=>{
-    saveVideo(f);
-    renderVideo(URL.createObjectURL(f));
-  });
-}
-
 function renderVideo(url){
   const v=document.createElement("video");
-  v.src=url;v.controls=true;
+  v.src=url;
+  v.controls=true;
   grid.appendChild(v);
 }
 
