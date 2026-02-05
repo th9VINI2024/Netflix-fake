@@ -1,55 +1,69 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Netflix</title>
 
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#000">
+
+<link id="favicon" rel="icon" href="icon-192.png">
 
 <style>
 *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
 body{margin:0;background:#000;color:#fff}
 
-/* LOGIN */
-#login{
-  height:100vh;display:flex;flex-direction:column;
-  justify-content:center;align-items:center
-}
+/* ---------- LOGIN ---------- */
+#login,#profiles,#home{min-height:100vh;display:none}
+#login{display:flex;flex-direction:column;justify-content:center;align-items:center}
 #login h1{color:#e50914;font-size:42px}
-#login input,#login button{
-  width:240px;padding:14px;border-radius:4px;border:none
-}
-#login button{background:#e50914;color:#fff;font-size:16px;margin-top:10px}
+input,button{padding:14px;border:none;border-radius:4px}
+button{background:#e50914;color:#fff;font-size:16px}
 
-/* PERFIS */
-#profiles{display:none;text-align:center;padding-top:60px}
-.profiles-grid{
-  display:flex;justify-content:center;gap:30px
-}
+/* ---------- PERFIS ---------- */
+#profiles{text-align:center;padding-top:60px}
+.profiles{display:flex;justify-content:center;gap:26px;flex-wrap:wrap}
 .profile{cursor:pointer}
 .avatar{
   width:90px;height:90px;border-radius:12px;
-  background:#222;display:flex;align-items:center;
-  justify-content:center;font-size:40px
+  background:#222;display:flex;align-items:center;justify-content:center;
+  font-size:40px;transition:.3s
 }
+.profile:hover .avatar{transform:scale(1.08)}
 
-/* HOME */
-#home{display:none}
+/* ---------- HEADER ---------- */
 header{
-  padding:14px;font-size:22px;color:#e50914
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px;font-size:22px
 }
+.logo{color:#e50914;user-select:none}
+.logout{font-size:14px;color:#aaa;cursor:pointer}
 
-/* GRID */
+/* ---------- GRID ---------- */
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:10px;padding:10px
 }
-video,iframe{
-  width:100%;border-radius:6px
+.card{
+  position:relative;border-radius:6px;overflow:hidden;
+  transition:.3s
 }
+.card:hover{transform:scale(1.04)}
+.card img{width:100%;aspect-ratio:2/3;object-fit:cover}
+.play{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.4);opacity:0;transition:.3s
+}
+.card:hover .play{opacity:1}
+
+/* ---------- PLAYER ---------- */
+video,iframe{width:100%;border-radius:6px;margin-top:10px}
+
+/* ---------- ESCONDER UPLOAD ---------- */
+#upload{display:none;padding:10px}
 </style>
 </head>
 
@@ -65,132 +79,165 @@ video,iframe{
 <!-- PERFIS -->
 <div id="profiles">
   <h2>Quem está assistindo?</h2>
-  <div class="profiles-grid">
-    <div class="profile" onclick="selectProfile('real')">
-      <div class="avatar">😎</div>
-      <p>Você</p>
+  <div class="profiles">
+    <div class="profile" onclick="enterProfile('real')">
+      <div class="avatar">😎</div><p>Você</p>
     </div>
-    <div class="profile" onclick="selectProfile('fake')">
-      <div class="avatar">🎬</div>
-      <p>Visitante</p>
+    <div class="profile" onclick="enterProfile('fake')">
+      <div class="avatar">🎬</div><p>Visitante</p>
+    </div>
+    <div class="profile" onclick="enterProfile('kids')">
+      <div class="avatar">🧒</div><p>Infantil</p>
     </div>
   </div>
 </div>
 
 <!-- HOME -->
 <div id="home">
-<header>Netflix</header>
+<header>
+  <div class="logo" id="logo">Netflix</div>
+  <div class="logout" onclick="logout()">Sair</div>
+</header>
 
 <!-- REAL -->
-<div id="realMode">
-  <h3 style="padding-left:10px">Meus vídeos</h3>
-  <input type="file" accept="video/*" multiple onchange="addVideos(event)" style="padding:10px">
+<div id="real">
+  <input id="upload" type="file" accept="video/*" multiple onchange="addVideos(event)">
   <div class="grid" id="myVideos"></div>
 </div>
 
 <!-- FAKE -->
-<div id="fakeMode">
-  <h3 style="padding-left:10px">Recomendados</h3>
+<div id="fake">
   <div class="grid">
-    <img src="https://image.tmdb.org/t/p/w500/9E2y5Q7WlCVNEhP5GiVTjhEhx1o.jpg"
-      onclick="playTrailer('https://www.youtube.com/embed/YoHD9XEInc0')">
-    <img src="https://image.tmdb.org/t/p/w500/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg"
-      onclick="playTrailer('https://www.youtube.com/embed/lJ3_biTbeRM')">
+    <div class="card" onclick="playTrailer('https://www.youtube.com/embed/YoHD9XEInc0')">
+      <img src="https://image.tmdb.org/t/p/w500/9E2y5Q7WlCVNEhP5GiVTjhEhx1o.jpg">
+      <div class="play">▶</div>
+    </div>
+    <div class="card" onclick="playTrailer('https://www.youtube.com/embed/lJ3_biTbeRM')">
+      <img src="https://image.tmdb.org/t/p/w500/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg">
+      <div class="play">▶</div>
+    </div>
   </div>
   <iframe id="trailer" height="220" allowfullscreen></iframe>
+</div>
+
+<!-- KIDS -->
+<div id="kids">
+  <div class="grid">
+    <div class="card">
+      <img src="https://image.tmdb.org/t/p/w500/6DrHO1jr3qVrViUO6s6kFiAGM7.jpg">
+    </div>
+    <div class="card">
+      <img src="https://image.tmdb.org/t/p/w500/7p3ZK1qzX5JcW9zPZ0RzF0qVQz5.jpg">
+    </div>
+  </div>
 </div>
 </div>
 
 <script>
 /* SENHAS */
-const REAL_PASSWORD="1234";
-const FAKE_PASSWORD="0000";
+const PASS_REAL="1234", PASS_FAKE="0000";
+const PIN_REAL="1111", PIN_FAKE="2222", PIN_KIDS="3333";
 let mode="";
-
-/* ELEMENTOS */
-const loginDiv=document.getElementById("login");
-const profilesDiv=document.getElementById("profiles");
-const homeDiv=document.getElementById("home");
-const realDiv=document.getElementById("realMode");
-const fakeDiv=document.getElementById("fakeMode");
-const grid=document.getElementById("myVideos");
-const passwordInput=document.getElementById("password");
-const trailer=document.getElementById("trailer");
 
 /* LOGIN */
 function login(){
-  const p=passwordInput.value;
-  if(p===REAL_PASSWORD) mode="real";
-  else if(p===FAKE_PASSWORD) mode="fake";
+  const p=password.value;
+  if(p===PASS_REAL) mode="real";
+  else if(p===PASS_FAKE) mode="fake";
   else return alert("Senha incorreta");
-
-  loginDiv.style.display="none";
-  profilesDiv.style.display="block";
+  login.style.display="none";
+  profiles.style.display="block";
 }
 
-/* PERFIL */
-function selectProfile(p){
-  if(p!==mode) return alert("Perfil bloqueado");
+/* PERFIL + PIN */
+function enterProfile(p){
+  const pin=prompt("Digite o PIN do perfil");
+  if(
+    (p==="real" && pin!==PIN_REAL)||
+    (p==="fake" && pin!==PIN_FAKE)||
+    (p==="kids" && pin!==PIN_KIDS)
+  ) return alert("PIN incorreto");
 
-  profilesDiv.style.display="none";
-  homeDiv.style.display="block";
+  profiles.style.display="none";
+  home.style.display="block";
 
-  if(mode==="real"){
-    realDiv.style.display="block";
-    fakeDiv.style.display="none";
-    loadVideos();
-  }else{
-    realDiv.style.display="none";
-    fakeDiv.style.display="block";
+  real.style.display = p==="real"?"block":"none";
+  fake.style.display = p==="fake"?"block":"none";
+  kids.style.display = p==="kids"?"block":"none";
+
+  // disfarce
+  if(p!=="real"){
+    logo.textContent="Stream";
+    favicon.href="icon-fake.png";
   }
 }
 
-/* BANCO */
-let db;
-const openDB=indexedDB.open("NetflixDB",1);
+/* LOGOUT */
+function logout(){
+  location.reload();
+}
 
-openDB.onupgradeneeded=e=>{
+/* UPLOAD SECRETO */
+let press;
+logo.addEventListener("touchstart",()=>{
+  press=setTimeout(()=>upload.style.display="block",3000);
+});
+logo.addEventListener("touchend",()=>clearTimeout(press));
+
+/* INDEXED DB */
+let db;
+const open=indexedDB.open("NetflixDB",1);
+open.onupgradeneeded=e=>{
   db=e.target.result;
   db.createObjectStore("videos",{autoIncrement:true});
 };
-
-openDB.onsuccess=e=>{
+open.onsuccess=e=>{
   db=e.target.result;
+  loadVideos();
 };
 
-/* REAL */
+/* ADD VIDEOS + CAPA */
 function addVideos(e){
-  if(mode!=="real") return;
-  [...e.target.files].forEach(file=>{
+  [...e.target.files].forEach(f=>{
     const tx=db.transaction("videos","readwrite");
-    tx.objectStore("videos").add(file);
-    renderVideo(URL.createObjectURL(file));
+    tx.objectStore("videos").add(f);
+    renderVideo(f);
   });
 }
 
+/* LOAD */
 function loadVideos(){
-  grid.innerHTML="";
+  myVideos.innerHTML="";
   const tx=db.transaction("videos","readonly");
   tx.objectStore("videos").openCursor().onsuccess=e=>{
     const c=e.target.result;
-    if(c){
-      renderVideo(URL.createObjectURL(c.value));
-      c.continue();
-    }
+    if(c){renderVideo(c.value);c.continue();}
   };
 }
 
-function renderVideo(url){
+/* RENDER */
+function renderVideo(file){
+  const url=URL.createObjectURL(file);
+  const card=document.createElement("div");
+  card.className="card";
+
   const v=document.createElement("video");
-  v.src=url;
-  v.controls=true;
-  grid.appendChild(v);
+  v.src=url;v.preload="metadata";
+
+  v.onloadeddata=()=>{
+    const c=document.createElement("canvas");
+    c.width=300;c.height=450;
+    c.getContext("2d").drawImage(v,0,0,c.width,c.height);
+    const img=document.createElement("img");
+    img.src=c.toDataURL();
+    card.appendChild(img);
+    card.onclick=()=>{v.controls=true;card.replaceWith(v);}
+  };
+  myVideos.appendChild(card);
 }
 
-/* FAKE */
-function playTrailer(url){
-  if(mode==="fake") trailer.src=url;
-}
+/* TRAILER */
+function playTrailer(u){ trailer.src=u; }
 </script>
 
 </body>
