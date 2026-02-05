@@ -134,110 +134,162 @@ video,iframe{width:100%;border-radius:6px;margin-top:10px}
 </div>
 
 <script>
-/* SENHAS */
-const PASS_REAL="1234", PASS_FAKE="0000";
-const PIN_REAL="1111", PIN_FAKE="2222", PIN_KIDS="3333";
-let mode="";
+/* ===== SENHAS ===== */
+const PASS_REAL = "1234";
+const PASS_FAKE = "0000";
 
-/* LOGIN */
+const PIN_REAL = "1111";
+const PIN_FAKE = "2222";
+const PIN_KIDS = "3333";
+
+let mode = "";
+
+/* ===== ELEMENTOS ===== */
+const loginDiv    = document.getElementById("login");
+const profilesDiv = document.getElementById("profiles");
+const homeDiv     = document.getElementById("home");
+
+const realDiv = document.getElementById("real");
+const fakeDiv = document.getElementById("fake");
+const kidsDiv = document.getElementById("kids");
+
+const passwordInput = document.getElementById("password");
+const uploadInput   = document.getElementById("upload");
+const myVideos      = document.getElementById("myVideos");
+const logo          = document.getElementById("logo");
+const trailer       = document.getElementById("trailer");
+
+/* ===== LOGIN ===== */
 function login(){
-  const p=password.value;
-  if(p===PASS_REAL) mode="real";
-  else if(p===PASS_FAKE) mode="fake";
-  else return alert("Senha incorreta");
-  login.style.display="none";
-  profiles.style.display="block";
+  const p = passwordInput.value;
+
+  if(p === PASS_REAL) mode = "real";
+  else if(p === PASS_FAKE) mode = "fake";
+  else {
+    alert("Senha incorreta");
+    return;
+  }
+
+  loginDiv.style.display = "none";
+  profilesDiv.style.display = "block";
 }
 
-/* PERFIL + PIN */
-function enterProfile(p){
-  const pin=prompt("Digite o PIN do perfil");
+/* ===== PERFIL + PIN ===== */
+function enterProfile(profile){
+  let pin = prompt("Digite o PIN do perfil");
+
   if(
-    (p==="real" && pin!==PIN_REAL)||
-    (p==="fake" && pin!==PIN_FAKE)||
-    (p==="kids" && pin!==PIN_KIDS)
-  ) return alert("PIN incorreto");
+    (profile === "real" && pin !== PIN_REAL) ||
+    (profile === "fake" && pin !== PIN_FAKE) ||
+    (profile === "kids" && pin !== PIN_KIDS)
+  ){
+    alert("PIN incorreto");
+    return;
+  }
 
-  profiles.style.display="none";
-  home.style.display="block";
+  profilesDiv.style.display = "none";
+  homeDiv.style.display = "block";
 
-  real.style.display = p==="real"?"block":"none";
-  fake.style.display = p==="fake"?"block":"none";
-  kids.style.display = p==="kids"?"block":"none";
+  realDiv.style.display = profile === "real" ? "block" : "none";
+  fakeDiv.style.display = profile === "fake" ? "block" : "none";
+  kidsDiv.style.display = profile === "kids" ? "block" : "none";
 
-  // disfarce
-  if(p!=="real"){
-    logo.textContent="Stream";
-    favicon.href="icon-fake.png";
+  if(profile !== "real"){
+    logo.textContent = "Stream";
   }
 }
 
-/* LOGOUT */
+/* ===== LOGOUT ===== */
 function logout(){
   location.reload();
 }
 
-/* UPLOAD SECRETO */
-let press;
-logo.addEventListener("touchstart",()=>{
-  press=setTimeout(()=>upload.style.display="block",3000);
+/* ===== UPLOAD SECRETO (3s no logo) ===== */
+let pressTimer;
+logo.addEventListener("touchstart", ()=>{
+  pressTimer = setTimeout(()=>{
+    uploadInput.style.display = "block";
+  }, 3000);
 });
-logo.addEventListener("touchend",()=>clearTimeout(press));
+logo.addEventListener("touchend", ()=> clearTimeout(pressTimer));
 
-/* INDEXED DB */
+/* ===== INDEXED DB ===== */
 let db;
-const open=indexedDB.open("NetflixDB",1);
-open.onupgradeneeded=e=>{
-  db=e.target.result;
-  db.createObjectStore("videos",{autoIncrement:true});
+const openDB = indexedDB.open("NetflixDB", 1);
+
+openDB.onupgradeneeded = e => {
+  db = e.target.result;
+  db.createObjectStore("videos", { autoIncrement: true });
 };
-open.onsuccess=e=>{
-  db=e.target.result;
+
+openDB.onsuccess = e => {
+  db = e.target.result;
   loadVideos();
 };
 
-/* ADD VIDEOS + CAPA */
+/* ===== SALVAR VÍDEOS ===== */
 function addVideos(e){
-  [...e.target.files].forEach(f=>{
-    const tx=db.transaction("videos","readwrite");
-    tx.objectStore("videos").add(f);
-    renderVideo(f);
+  if(mode !== "real") return;
+
+  [...e.target.files].forEach(file=>{
+    const tx = db.transaction("videos","readwrite");
+    tx.objectStore("videos").add(file);
+    renderVideo(file);
   });
 }
 
-/* LOAD */
+/* ===== CARREGAR ===== */
 function loadVideos(){
-  myVideos.innerHTML="";
-  const tx=db.transaction("videos","readonly");
-  tx.objectStore("videos").openCursor().onsuccess=e=>{
-    const c=e.target.result;
-    if(c){renderVideo(c.value);c.continue();}
+  myVideos.innerHTML = "";
+  const tx = db.transaction("videos","readonly");
+  tx.objectStore("videos").openCursor().onsuccess = e=>{
+    const cursor = e.target.result;
+    if(cursor){
+      renderVideo(cursor.value);
+      cursor.continue();
+    }
   };
 }
 
-/* RENDER */
+/* ===== RENDER COM CAPA ===== */
 function renderVideo(file){
-  const url=URL.createObjectURL(file);
-  const card=document.createElement("div");
-  card.className="card";
+  const url = URL.createObjectURL(file);
+  const card = document.createElement("div");
+  card.className = "card";
 
-  const v=document.createElement("video");
-  v.src=url;v.preload="metadata";
+  const video = document.createElement("video");
+  video.src = url;
+  video.preload = "metadata";
 
-  v.onloadeddata=()=>{
-    const c=document.createElement("canvas");
-    c.width=300;c.height=450;
-    c.getContext("2d").drawImage(v,0,0,c.width,c.height);
-    const img=document.createElement("img");
-    img.src=c.toDataURL();
+  video.onloadeddata = ()=>{
+    const canvas = document.createElement("canvas");
+    canvas.width = 300;
+    canvas.height = 450;
+    canvas.getContext("2d").drawImage(video,0,0,300,450);
+
+    const img = document.createElement("img");
+    img.src = canvas.toDataURL();
+
+    const play = document.createElement("div");
+    play.className = "play";
+    play.innerHTML = "▶";
+
     card.appendChild(img);
-    card.onclick=()=>{v.controls=true;card.replaceWith(v);}
+    card.appendChild(play);
+
+    card.onclick = ()=>{
+      video.controls = true;
+      card.replaceWith(video);
+    };
   };
+
   myVideos.appendChild(card);
 }
 
-/* TRAILER */
-function playTrailer(u){ trailer.src=u; }
+/* ===== TRAILER ===== */
+function playTrailer(url){
+  trailer.src = url;
+}
 </script>
 
 </body>
