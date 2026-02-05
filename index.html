@@ -9,13 +9,11 @@
 <meta name="theme-color" content="#000000">
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
-
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Roboto', sans-serif;
+  font-family: Arial, sans-serif;
 }
 
 body {
@@ -23,7 +21,7 @@ body {
   color: #fff;
 }
 
-/* ---------- LOGIN ---------- */
+/* LOGIN */
 #login {
   height: 100vh;
   display: flex;
@@ -36,45 +34,31 @@ body {
   font-size: 42px;
   margin-bottom: 30px;
 }
-#login input {
+#login input, #login button {
   width: 260px;
   padding: 14px;
+  margin-bottom: 12px;
   border-radius: 4px;
   border: none;
-  margin-bottom: 12px;
 }
 #login button {
-  width: 260px;
-  padding: 14px;
   background: #e50914;
   color: #fff;
-  border: none;
   font-size: 16px;
 }
 
-/* ---------- PERFIS ---------- */
+/* PERFIL */
 #profiles {
   display: none;
   text-align: center;
   padding: 40px 20px;
 }
-#profiles h2 {
-  margin-bottom: 25px;
-}
-.profiles-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 25px;
-}
 .profile img {
-  width: 110px;
+  width: 120px;
   border-radius: 12px;
 }
-.profile p {
-  margin-top: 8px;
-}
 
-/* ---------- HOME ---------- */
+/* HOME */
 #home {
   display: none;
 }
@@ -84,26 +68,27 @@ header {
   color: #e50914;
   font-weight: bold;
 }
+
 .section {
   padding: 15px;
-}
-.section h3 {
-  margin-bottom: 10px;
 }
 .grid {
   display: flex;
   gap: 10px;
   overflow-x: auto;
 }
-.card img {
-  width: 120px;
+.card video, .card img {
+  width: 130px;
   border-radius: 6px;
 }
 
-/* ---------- PLAYER ---------- */
-video, iframe {
+/* PLAYER */
+#player {
+  display: none;
+  padding: 15px;
+}
+#player video {
   width: 100%;
-  margin-top: 15px;
   border-radius: 6px;
 }
 </style>
@@ -111,32 +96,34 @@ video, iframe {
 
 <body>
 
+<!-- LOGIN -->
 <div id="login">
   <h1>Netflix</h1>
   <input type="password" id="password" placeholder="Senha">
   <button onclick="login()">Entrar</button>
 </div>
 
+<!-- PERFIL -->
 <div id="profiles">
   <h2>Quem está assistindo?</h2>
-  <div class="profiles-grid">
-    <div class="profile" onclick="enterHome()">
-      <img src="https://i.imgur.com/1X7Z1ZB.png">
-      <p>Você</p>
-    </div>
+  <div class="profile" onclick="enterHome()">
+    <img src="https://i.imgur.com/1X7Z1ZB.png">
+    <p>Você</p>
   </div>
 </div>
 
+<!-- HOME -->
 <div id="home">
   <header>Netflix</header>
 
+  <!-- MODO REAL -->
   <div class="section" id="realMode">
     <h3>Meus vídeos</h3>
-    <input type="file" accept="video/*" onchange="loadVideo(event)">
-    <div class="grid" id="myVideos">
-    <video controls id="videoPlayer"></video>
+    <input type="file" accept="video/*" onchange="saveVideo(event)">
+    <div class="grid" id="myVideos"></div>
   </div>
 
+  <!-- MODO FAKE -->
   <div class="section" id="fakeMode">
     <h3>Séries recomendadas</h3>
     <div class="grid">
@@ -147,33 +134,34 @@ video, iframe {
         <img src="https://image.tmdb.org/t/p/w500/9PFonBhy4cQy7Jz20NpMygczOkv.jpg">
       </div>
     </div>
-    <iframe id="trailer" height="220" allowfullscreen></iframe>
+    <iframe id="trailer" width="100%" height="220" allowfullscreen></iframe>
   </div>
+</div>
+
+<!-- PLAYER -->
+<div id="player">
+  <video controls id="videoPlayer"></video>
 </div>
 
 <script>
 let mode = "";
+let db;
 
 const loginDiv = document.getElementById("login");
 const profilesDiv = document.getElementById("profiles");
 const homeDiv = document.getElementById("home");
-const realModeDiv = document.getElementById("realMode");
-const fakeModeDiv = document.getElementById("fakeMode");
-const passwordInput = document.getElementById("password");
-const trailerFrame = document.getElementById("trailer");
+const realMode = document.getElementById("realMode");
+const fakeMode = document.getElementById("fakeMode");
+const myVideos = document.getElementById("myVideos");
 const videoPlayer = document.getElementById("videoPlayer");
+const player = document.getElementById("player");
 
+/* LOGIN */
 function login() {
-  const pass = passwordInput.value;
-
-  if (pass === "1234") {
-    mode = "real";
-  } else if (pass === "0000") {
-    mode = "fake";
-  } else {
-    alert("Senha incorreta");
-    return;
-  }
+  const pass = document.getElementById("password").value;
+  if (pass === "9999") mode = "real";
+  else if (pass === "2503") mode = "fake";
+  else return alert("Senha incorreta");
 
   loginDiv.style.display = "none";
   profilesDiv.style.display = "block";
@@ -182,32 +170,62 @@ function login() {
 function enterHome() {
   profilesDiv.style.display = "none";
   homeDiv.style.display = "block";
-
-  if (mode === "real") {
-    realModeDiv.style.display = "block";
-    fakeModeDiv.style.display = "none";
-  } else {
-    realModeDiv.style.display = "none";
-    fakeModeDiv.style.display = "block";
-  }
+  realMode.style.display = mode === "real" ? "block" : "none";
+  fakeMode.style.display = mode === "fake" ? "block" : "none";
+  loadVideos();
 }
 
-function loadVideo(e) {
+/* INDEXED DB */
+const request = indexedDB.open("NetflixDB", 1);
+request.onupgradeneeded = e => {
+  db = e.target.result;
+  db.createObjectStore("videos", { autoIncrement: true });
+};
+request.onsuccess = e => {
+  db = e.target.result;
+};
+
+/* SALVAR VÍDEO */
+function saveVideo(e) {
   const file = e.target.files[0];
-  if (file) {
-    videoPlayer.src = URL.createObjectURL(file);
-    videoPlayer.play();
-  }
+  const tx = db.transaction("videos", "readwrite");
+  tx.objectStore("videos").add(file);
+  tx.oncomplete = loadVideos;
+}
+
+/* CARREGAR VÍDEOS */
+function loadVideos() {
+  myVideos.innerHTML = "";
+  const tx = db.transaction("videos", "readonly");
+  const store = tx.objectStore("videos");
+
+  store.openCursor().onsuccess = e => {
+    const cursor = e.target.result;
+    if (cursor) {
+      const url = URL.createObjectURL(cursor.value);
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `<video src="${url}"></video>`;
+      card.onclick = () => {
+        videoPlayer.src = url;
+        player.style.display = "block";
+        videoPlayer.play();
+      };
+      myVideos.appendChild(card);
+      cursor.continue();
+    }
+  };
 }
 
 function playTrailer(url) {
-  trailerFrame.src = url;
+  document.getElementById("trailer").src = url;
 }
 
+/* PWA */
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js');
 }
-   </script>
+</script>
 
 </body>
 </html>
